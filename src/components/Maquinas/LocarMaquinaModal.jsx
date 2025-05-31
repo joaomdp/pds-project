@@ -11,6 +11,7 @@ export default function LocarMaquinaModal({
   isOpen,
   onClose,
   maquina: maquinaInicial,
+  locacaoAtual,
 }) {
   const { clientes, addCliente } = useClientes();
   const { adicionarLocacao } = useLocacoes();
@@ -66,6 +67,22 @@ export default function LocarMaquinaModal({
     );
     setClientesFiltrados(filtrados);
   }, [buscaCliente, clientes]);
+
+  useEffect(() => {
+    if (locacaoAtual) {
+      setClienteId(locacaoAtual.clienteId);
+      setEndereco(locacaoAtual.endereco);
+      setQuantidade(locacaoAtual.quantidade.toString());
+      setValorDiaria(locacaoAtual.valorDiaria);
+      setFrete(locacaoAtual.valorFrete?.toString() || "");
+      setPago(locacaoAtual.pago);
+
+      const cliente = clientes.find((c) => c.id === locacaoAtual.clienteId);
+      if (cliente) {
+        setBuscaCliente(cliente.nome);
+      }
+    }
+  }, [locacaoAtual, clientes]);
 
   const validateForm = () => {
     const errors = {};
@@ -241,7 +258,7 @@ export default function LocarMaquinaModal({
           >
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-800">
-                Locar Máquina
+                {locacaoAtual ? "Renovar Locação" : "Locar Máquina"}
               </h2>
               <button
                 onClick={onClose}

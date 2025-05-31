@@ -2,9 +2,17 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import Sidebar from "../components/layout/Sidebar";
 import LocacoesProvider from "../components/Locacoes/LocacoesProvider";
+import LocarMaquinaModal from "../components/Maquinas/LocarMaquinaModal";
 
 export default function LocacoesPage() {
   const [busca, setBusca] = useState("");
+  const [showRenovarModal, setShowRenovarModal] = useState(false);
+  const [locacaoParaRenovar, setLocacaoParaRenovar] = useState(null);
+
+  const handleRenovarLocacao = (locacao) => {
+    setLocacaoParaRenovar(locacao);
+    setShowRenovarModal(true);
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -39,7 +47,19 @@ export default function LocacoesPage() {
           </div>
         </div>
 
-        <LocacoesProvider termoBusca={busca} />
+        <LocacoesProvider termoBusca={busca} onRenovar={handleRenovarLocacao} />
+
+        {locacaoParaRenovar && (
+          <LocarMaquinaModal
+            isOpen={showRenovarModal}
+            onClose={() => {
+              setShowRenovarModal(false);
+              setLocacaoParaRenovar(null);
+            }}
+            maquina={locacaoParaRenovar.maquina}
+            locacaoAtual={locacaoParaRenovar}
+          />
+        )}
       </main>
     </div>
   );

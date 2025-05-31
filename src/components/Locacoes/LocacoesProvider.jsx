@@ -7,7 +7,7 @@ import ListaLocacoes from "./ListaLocacoes";
 import ConfirmacaoModal from "../Clientes/ConfirmacaoModal";
 import { registrarAtividade } from "../../utils/atividades";
 
-export default function LocacoesProvider({ termoBusca }) {
+export default function LocacoesProvider({ termoBusca, onRenovar }) {
   const { locacoes, loading, error, editarLocacao } = useLocacoes();
   const { maquinas, editarMaquina } = useMaquinas();
   const { clientes } = useClientes();
@@ -114,6 +114,7 @@ export default function LocacoesProvider({ termoBusca }) {
           setLocacaoSelecionada(locacao);
           setShowConfirmacao(true);
         }}
+        onRenovar={onRenovar}
       />
 
       <ConfirmacaoModal
