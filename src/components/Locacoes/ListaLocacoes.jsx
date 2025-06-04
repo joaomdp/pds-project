@@ -8,6 +8,7 @@ export default function ListaLocacoes({
   maquinas,
   onConcluir,
   onRenovar,
+  onEditar,
 }) {
   if (locacoes.length === 0) {
     return (
@@ -38,97 +39,114 @@ export default function ListaLocacoes({
               delay: index * 0.05,
               ease: "easeOut",
             }}
-            className="bg-white rounded-xl shadow-md overflow-hidden"
+            className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"
           >
             <div className="p-6">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div className="space-y-2">
-                  <h3 className="text-lg font-semibold text-gray-800">
+              {/* Cabeçalho */}
+              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-6 pb-6 border-b border-gray-100">
+                <div className="space-y-1">
+                  <h3 className="text-xl font-bold text-gray-800">
                     {maquina?.nome || "Máquina não encontrada"}
                   </h3>
-                  <p className="text-gray-600">
-                    Cliente: {cliente?.nome || "Cliente não encontrado"}
-                  </p>
-                  <p className="text-gray-500 text-sm">
-                    Endereço: {locacao.endereco || "Endereço não informado"}
-                  </p>
-                  <div className="grid grid-cols-2 gap-4 text-sm text-gray-500">
-                    <div>
-                      <p>Data Início:</p>
-                      <p className="font-medium text-gray-700">
-                        {format(
-                          locacao.dataInicio instanceof Date
-                            ? locacao.dataInicio
-                            : locacao.dataInicio.toDate(),
-                          "dd/MM/yyyy",
-                          { locale: ptBR }
-                        )}
-                      </p>
-                    </div>
-                    <div>
-                      <p>Data Fim:</p>
-                      <p className="font-medium text-gray-700">
-                        {format(
-                          locacao.dataFim instanceof Date
-                            ? locacao.dataFim
-                            : locacao.dataFim.toDate(),
-                          "dd/MM/yyyy",
-                          { locale: ptBR }
-                        )}
-                      </p>
-                    </div>
-                    <div>
-                      <p>Quantidade:</p>
-                      <p className="font-medium text-gray-700">
-                        {locacao.quantidade} unidade(s)
-                      </p>
-                    </div>
-                    <div>
-                      <p>Valor Total:</p>
-                      <p className="font-medium text-gray-700">
-                        R$ {locacao.valorTotal.toFixed(2)}
-                      </p>
-                    </div>
-                    <div>
-                      <p>Status de Pagamento:</p>
-                      <p
-                        className={`font-medium ${
-                          locacao.pago === "sim"
-                            ? "text-green-600"
-                            : "text-red-600"
-                        }`}
-                      >
-                        {locacao.pago === "sim" ? "Pago" : "Não Pago"}
-                      </p>
-                    </div>
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <i className="bx bx-user text-lg"></i>
+                    <p>{cliente?.nome || "Cliente não encontrado"}</p>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-500">
+                    <i className="bx bx-map text-lg"></i>
+                    <p className="text-sm">
+                      {locacao.endereco || "Endereço não informado"}
+                    </p>
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-2">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() =>
-                      onRenovar({
-                        ...locacao,
-                        maquina: maquina,
-                      })
-                    }
-                    className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      locacao.pago === "sim"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
+                    }`}
                   >
-                    <i className="bx bx-refresh text-xl"></i>
-                    Renovar Locação
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => onConcluir(locacao)}
-                    className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
-                  >
-                    <i className="bx bx-check text-xl"></i>
-                    Concluir Locação
-                  </motion.button>
+                    {locacao.pago === "sim" ? "Pago" : "Não Pago"}
+                  </span>
                 </div>
+              </div>
+
+              {/* Informações da Locação */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-sm text-gray-500 mb-1">Data Início</p>
+                  <p className="font-semibold text-gray-800">
+                    {format(
+                      locacao.dataInicio instanceof Date
+                        ? locacao.dataInicio
+                        : locacao.dataInicio.toDate(),
+                      "dd/MM/yyyy",
+                      { locale: ptBR }
+                    )}
+                  </p>
+                </div>
+
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-sm text-gray-500 mb-1">Data Fim</p>
+                  <p className="font-semibold text-gray-800">
+                    {format(
+                      locacao.dataFim instanceof Date
+                        ? locacao.dataFim
+                        : locacao.dataFim.toDate(),
+                      "dd/MM/yyyy",
+                      { locale: ptBR }
+                    )}
+                  </p>
+                </div>
+
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-sm text-gray-500 mb-1">Quantidade</p>
+                  <p className="font-semibold text-gray-800">
+                    {locacao.quantidade} unidade(s)
+                  </p>
+                </div>
+
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-sm text-gray-500 mb-1">Valor Total</p>
+                  <p className="font-semibold text-gray-800">
+                    R$ {locacao.valorTotal.toFixed(2)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Botões de Ação */}
+              <div className="flex flex-wrap gap-3 justify-end">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => onEditar(locacao)}
+                  className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-colors flex items-center gap-2 text-sm font-medium shadow-sm hover:shadow-md"
+                >
+                  <i className="bx bx-edit text-lg"></i>
+                  Editar
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => onRenovar({ ...locacao, maquina: maquina })}
+                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors flex items-center gap-2 text-sm font-medium shadow-sm hover:shadow-md"
+                >
+                  <i className="bx bx-refresh text-lg"></i>
+                  Renovar
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => onConcluir(locacao)}
+                  className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors flex items-center gap-2 text-sm font-medium shadow-sm hover:shadow-md"
+                >
+                  <i className="bx bx-check text-lg"></i>
+                  Concluir
+                </motion.button>
               </div>
             </div>
           </motion.div>

@@ -20,7 +20,7 @@ export default function AddCategoriaModal({ isOpen, onClose, onSubmit }) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 overflow-y-auto"
+          className="fixed inset-0 bg-black/30 z-50 overflow-y-auto"
         >
           <div className="min-h-screen px-4 py-8 flex items-center justify-center">
             <motion.div

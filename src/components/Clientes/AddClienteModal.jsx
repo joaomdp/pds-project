@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 export default function AddClienteModal({ isOpen, onClose, onSubmit, erro }) {
   const [formData, setFormData] = useState({
     nome: "",
-    email: "",
     telefone: "",
     cpf: "",
   });
@@ -33,13 +32,6 @@ export default function AddClienteModal({ isOpen, onClose, onSubmit, erro }) {
       errors.nome = "Nome é obrigatório";
     } else if (formData.nome.length < 3) {
       errors.nome = "Nome deve ter pelo menos 3 caracteres";
-    }
-
-    if (
-      formData.email.trim() &&
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
-    ) {
-      errors.email = "E-mail inválido";
     }
 
     const telefoneNumeros = formData.telefone.replace(/\D/g, "");
@@ -86,10 +78,16 @@ export default function AddClienteModal({ isOpen, onClose, onSubmit, erro }) {
     setIsLoading(true);
 
     try {
-      await onSubmit(formData);
+      const dadosCliente = {
+        nome: formData.nome,
+        telefone: formData.telefone.replace(/\D/g, ""),
+        cpf: formData.cpf.replace(/\D/g, ""),
+        endereco: "",
+      };
+
+      await onSubmit(dadosCliente);
       setFormData({
         nome: "",
-        email: "",
         telefone: "",
         cpf: "",
       });
@@ -104,7 +102,7 @@ export default function AddClienteModal({ isOpen, onClose, onSubmit, erro }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -148,26 +146,6 @@ export default function AddClienteModal({ isOpen, onClose, onSubmit, erro }) {
               {validationErrors.nome && (
                 <p className="mt-1 text-sm text-red-600">
                   {validationErrors.nome}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email
-              </label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className={`w-full px-3 py-2 border ${
-                  validationErrors.email ? "border-red-300" : "border-gray-300"
-                } rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent`}
-              />
-              {validationErrors.email && (
-                <p className="mt-1 text-sm text-red-600">
-                  {validationErrors.email}
                 </p>
               )}
             </div>

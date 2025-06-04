@@ -6,6 +6,7 @@ import { useClientes } from "../../hooks/useClientes";
 import ListaLocacoes from "./ListaLocacoes";
 import ConfirmacaoModal from "../Clientes/ConfirmacaoModal";
 import { registrarAtividade } from "../../utils/atividades";
+import LocarMaquinaModal from "../Maquinas/LocarMaquinaModal";
 
 export default function LocacoesProvider({ termoBusca, onRenovar }) {
   const { locacoes, loading, error, editarLocacao } = useLocacoes();
@@ -14,6 +15,7 @@ export default function LocacoesProvider({ termoBusca, onRenovar }) {
   const [locacoesFiltradas, setLocacoesFiltradas] = useState([]);
   const [showConfirmacao, setShowConfirmacao] = useState(false);
   const [locacaoSelecionada, setLocacaoSelecionada] = useState(null);
+  const [showEditarModal, setShowEditarModal] = useState(false);
 
   useEffect(() => {
     const locacoesAtivas = locacoes.filter(
@@ -85,6 +87,11 @@ export default function LocacoesProvider({ termoBusca, onRenovar }) {
     }
   };
 
+  const handleEditarLocacao = (locacao) => {
+    setLocacaoSelecionada(locacao);
+    setShowEditarModal(true);
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -115,6 +122,7 @@ export default function LocacoesProvider({ termoBusca, onRenovar }) {
           setShowConfirmacao(true);
         }}
         onRenovar={onRenovar}
+        onEditar={handleEditarLocacao}
       />
 
       <ConfirmacaoModal
@@ -128,6 +136,19 @@ export default function LocacoesProvider({ termoBusca, onRenovar }) {
         titulo="Concluir Locação"
         mensagem="Tem certeza que deseja concluir esta locação? Esta ação não pode ser desfeita."
       />
+
+      {locacaoSelecionada && (
+        <LocarMaquinaModal
+          isOpen={showEditarModal}
+          onClose={() => {
+            setShowEditarModal(false);
+            setLocacaoSelecionada(null);
+          }}
+          maquina={maquinas.find((m) => m.id === locacaoSelecionada.maquinaId)}
+          locacaoAtual={locacaoSelecionada}
+          modoEdicao={true}
+        />
+      )}
     </div>
   );
 }
