@@ -15,6 +15,7 @@ import {
   endOfWeek,
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { Tooltip } from "react-tooltip";
 
 export default function Calendar() {
   const [locacoes, setLocacoes] = useState([]);
@@ -33,17 +34,29 @@ export default function Calendar() {
     const unsubscribe = onSnapshot(
       locacoesQuery,
       (snapshot) => {
-        const locacoesData = snapshot.docs.map((doc) => {
+        const locacoesData = [];
+        snapshot.docs.forEach((doc) => {
           const data = doc.data();
-          return {
-            id: doc.id,
-            maquinaNome: data.maquinaNome,
-            clienteNome: data.clienteNome,
-            dataInicio: data.dataInicio?.toDate(),
-            dataFim: data.dataFim?.toDate(),
-          };
+          if (Array.isArray(data.maquinas) && data.maquinas.length > 0) {
+            data.maquinas.forEach((m) => {
+              locacoesData.push({
+                id: doc.id + "-" + (m.maquinaId || m.nome || Math.random()),
+                maquinaNome: m.maquinaNome || m.nome || "",
+                clienteNome: data.clienteNome,
+                dataInicio: data.dataInicio?.toDate(),
+                dataFim: data.dataFim?.toDate(),
+              });
+            });
+          } else {
+            locacoesData.push({
+              id: doc.id,
+              maquinaNome: data.maquinaNome || "",
+              clienteNome: data.clienteNome,
+              dataInicio: data.dataInicio?.toDate(),
+              dataFim: data.dataFim?.toDate(),
+            });
+          }
         });
-
         setLocacoes(locacoesData);
         setError(null);
         setIsLoading(false);
@@ -113,7 +126,7 @@ export default function Calendar() {
   const diasSemana = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
   return (
-    <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+    <div className="bg-white rounded-xl shadow-lg">
       <div className="bg-white border-b border-gray-200 p-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
@@ -187,8 +200,11 @@ export default function Calendar() {
                       {locacoesDoDia.map((locacao, idx) => (
                         <div
                           key={idx}
-                          className="text-xs bg-white text-green-800 px-2 py-1 rounded border border-green-100 truncate"
-                          title={`${locacao.maquinaNome} - ${locacao.clienteNome}`}
+                          className="relative text-xs bg-white text-green-800 px-2 py-1 rounded border border-green-100 truncate cursor-pointer"
+                          data-tooltip-id="cliente-tooltip"
+                          data-tooltip-content={
+                            locacao.clienteNome || "Desconhecido"
+                          }
                         >
                           {locacao.maquinaNome}
                         </div>
@@ -201,6 +217,7 @@ export default function Calendar() {
           })}
         </div>
       </div>
+      <Tooltip id="cliente-tooltip" place="top" />
     </div>
   );
 }

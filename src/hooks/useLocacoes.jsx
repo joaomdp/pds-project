@@ -1,13 +1,11 @@
 import { useState, useEffect } from "react";
 import {
   collection,
-  getDocs,
   addDoc,
   doc,
   updateDoc,
   deleteDoc,
-  query,
-  orderBy,
+  onSnapshot,
 } from "firebase/firestore";
 import { db } from "../firebaseConfig";
 
@@ -17,25 +15,20 @@ export function useLocacoes() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const carregarLocacoes = async () => {
-      try {
-        const querySnapshot = await getDocs(
-          query(collection(db, "locacoes"), orderBy("dataInicio", "desc"))
+    const unsubscribe = onSnapshot(
+      collection(db, "locacoes"),
+      (snapshot) => {
+        setLocacoes(
+          snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
         );
-        const locacoesData = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setLocacoes(locacoesData);
-      } catch (err) {
-        console.error("Erro ao carregar locações:", err);
+        setLoading(false);
+      },
+      (err) => {
         setError(err.message);
-      } finally {
         setLoading(false);
       }
-    };
-
-    carregarLocacoes();
+    );
+    return () => unsubscribe();
   }, []);
 
   const adicionarLocacao = async (locacaoData) => {
@@ -69,6 +62,10 @@ export function useLocacoes() {
   };
 
   const removerLocacao = async (id) => {
+    if (!id) {
+      console.error("ID da locação não fornecido para remoção!");
+      return;
+    }
     try {
       const locacaoRef = doc(db, "locacoes", id);
       await deleteDoc(locacaoRef);

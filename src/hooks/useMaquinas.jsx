@@ -9,6 +9,7 @@ import {
   getDoc,
   query,
   where,
+  onSnapshot,
 } from "firebase/firestore";
 import { db } from "../firebaseConfig";
 
@@ -42,9 +43,18 @@ export function useMaquinas() {
         const maquinasLocadas = {};
         locacoesSnapshot.forEach((doc) => {
           const locacao = doc.data();
-          const maquinaId = locacao.maquinaId;
-          maquinasLocadas[maquinaId] =
-            (maquinasLocadas[maquinaId] || 0) + (locacao.quantidade || 1);
+          if (Array.isArray(locacao.maquinas)) {
+            locacao.maquinas.forEach((m) => {
+              if (!m.maquinaId) return;
+              maquinasLocadas[m.maquinaId] =
+                (maquinasLocadas[m.maquinaId] || 0) + (m.quantidade || 1);
+            });
+          } else if (locacao.maquinaId) {
+            // fallback para locações antigas
+            maquinasLocadas[locacao.maquinaId] =
+              (maquinasLocadas[locacao.maquinaId] || 0) +
+              (locacao.quantidade || 1);
+          }
         });
 
         const maquinasData = querySnapshot.docs.map((doc) => {
@@ -81,6 +91,117 @@ export function useMaquinas() {
     };
 
     carregarMaquinas();
+  }, []);
+
+  // Adicionar listener para atualizações em tempo real das máquinas e locações
+  useEffect(() => {
+    const unsubscribeMaquinas = onSnapshot(
+      collection(db, "maquinas"),
+      async (snapshot) => {
+        try {
+          // Buscar locações ativas
+          const locacoesRef = collection(db, "locacoes");
+          const locacoesSnapshot = await getDocs(
+            query(locacoesRef, where("status", "==", "ativa"))
+          );
+
+          // Contar quantas máquinas de cada tipo estão locadas
+          const maquinasLocadas = {};
+          locacoesSnapshot.forEach((doc) => {
+            const locacao = doc.data();
+            if (Array.isArray(locacao.maquinas)) {
+              locacao.maquinas.forEach((m) => {
+                if (!m.maquinaId) return;
+                maquinasLocadas[m.maquinaId] =
+                  (maquinasLocadas[m.maquinaId] || 0) + (m.quantidade || 1);
+              });
+            } else if (locacao.maquinaId) {
+              // fallback para locações antigas
+              maquinasLocadas[locacao.maquinaId] =
+                (maquinasLocadas[locacao.maquinaId] || 0) +
+                (locacao.quantidade || 1);
+            }
+          });
+
+          const maquinasData = snapshot.docs.map((doc) => {
+            const data = doc.data();
+            const quantidadeLocada = maquinasLocadas[doc.id] || 0;
+            const quantidadeTotal = data.quantidade || 1;
+            const disponivel = quantidadeLocada < quantidadeTotal;
+
+            return {
+              id: doc.id,
+              ...data,
+              quantidadeLocada,
+              disponivel,
+            };
+          });
+
+          setMaquinas(maquinasData);
+        } catch (err) {
+          console.error("Erro ao atualizar máquinas:", err);
+        }
+      }
+    );
+
+    // Adicionar listener para locações para atualizar disponibilidade das máquinas
+    const unsubscribeLocacoes = onSnapshot(
+      query(collection(db, "locacoes"), where("status", "==", "ativa")),
+      async () => {
+        try {
+          // Recarregar máquinas quando locações mudarem
+          const maquinasRef = collection(db, "maquinas");
+          const maquinasSnapshot = await getDocs(maquinasRef);
+
+          const locacoesRef = collection(db, "locacoes");
+          const locacoesSnapshot = await getDocs(
+            query(locacoesRef, where("status", "==", "ativa"))
+          );
+
+          const maquinasLocadas = {};
+          locacoesSnapshot.forEach((doc) => {
+            const locacao = doc.data();
+            if (Array.isArray(locacao.maquinas)) {
+              locacao.maquinas.forEach((m) => {
+                if (!m.maquinaId) return;
+                maquinasLocadas[m.maquinaId] =
+                  (maquinasLocadas[m.maquinaId] || 0) + (m.quantidade || 1);
+              });
+            } else if (locacao.maquinaId) {
+              maquinasLocadas[locacao.maquinaId] =
+                (maquinasLocadas[locacao.maquinaId] || 0) +
+                (locacao.quantidade || 1);
+            }
+          });
+
+          const maquinasData = maquinasSnapshot.docs.map((doc) => {
+            const data = doc.data();
+            const quantidadeLocada = maquinasLocadas[doc.id] || 0;
+            const quantidadeTotal = data.quantidade || 1;
+            const disponivel = quantidadeLocada < quantidadeTotal;
+
+            return {
+              id: doc.id,
+              ...data,
+              quantidadeLocada,
+              disponivel,
+            };
+          });
+
+          setMaquinas(maquinasData);
+        } catch (err) {
+          console.error(
+            "Erro ao atualizar máquinas após mudança nas locações:",
+            err
+          );
+        }
+      }
+    );
+
+    return () => {
+      unsubscribeMaquinas();
+      unsubscribeLocacoes();
+    };
   }, []);
 
   const adicionarMaquina = async (dados) => {

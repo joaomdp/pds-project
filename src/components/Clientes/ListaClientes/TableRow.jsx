@@ -4,15 +4,40 @@ export default function TableRow({
   cliente,
   isEditing,
   dadosEditados,
+  dadosVisiveis,
   onInputChange,
   onEditar,
   onExcluir,
   onSalvar,
   onCancelar,
 }) {
+  // Função para ocultar dados sensíveis
+  const ocultarDados = (dados, tipo) => {
+    // Se os dados globais estão visíveis OU os dados individuais estão visíveis
+    if (dadosVisiveis) return dados;
+
+    if (!dados) return "***";
+
+    switch (tipo) {
+      case "nome":
+        // Mostra apenas a primeira letra do nome
+        return dados.charAt(0) + "***";
+      case "telefone":
+        // Mostra apenas os últimos 2 dígitos
+        if (dados.length <= 2) return "***";
+        return "***" + dados.slice(-2);
+      case "cpf":
+        // Mostra apenas os últimos 3 dígitos
+        if (dados.length <= 3) return "***";
+        return "***" + dados.slice(-3);
+      default:
+        return "***";
+    }
+  };
+
   return (
     <tr className="hover:bg-gray-50">
-      <td className="px-6 py-4 whitespace-nowrap">
+      <td className="px-3 py-4 whitespace-nowrap text-left align-middle">
         {isEditing ? (
           <input
             type="text"
@@ -22,12 +47,12 @@ export default function TableRow({
             className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
           />
         ) : (
-          <div className="text-sm font-medium text-gray-900">
-            {cliente.nome}
-          </div>
+          <span className="text-sm font-medium text-gray-900 truncate block max-w-[180px]">
+            {ocultarDados(cliente.nome, "nome")}
+          </span>
         )}
       </td>
-      <td className="px-6 py-4 whitespace-nowrap">
+      <td className="px-3 py-4 whitespace-nowrap text-left align-middle">
         {isEditing ? (
           <input
             type="tel"
@@ -37,10 +62,12 @@ export default function TableRow({
             className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
           />
         ) : (
-          <div className="text-sm text-gray-500">{cliente.telefone}</div>
+          <span className="text-sm text-gray-500">
+            {ocultarDados(cliente.telefone, "telefone")}
+          </span>
         )}
       </td>
-      <td className="px-6 py-4 whitespace-nowrap">
+      <td className="px-3 py-4 whitespace-nowrap text-left align-middle">
         {isEditing ? (
           <input
             type="text"
@@ -50,10 +77,12 @@ export default function TableRow({
             className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
           />
         ) : (
-          <div className="text-sm text-gray-500">{cliente.cpf}</div>
+          <span className="text-sm text-gray-500">
+            {ocultarDados(cliente.cpf, "cpf")}
+          </span>
         )}
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+      <td className="px-6 py-4 whitespace-nowrap text-right align-middle text-sm font-medium">
         {isEditing ? (
           <div className="flex justify-end space-x-2">
             <button

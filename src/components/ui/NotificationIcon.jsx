@@ -1,11 +1,15 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { useLocacoes } from "../../hooks/useLocacoes";
+import { useMaquinas } from "../../hooks/useMaquinas";
 
 const NotificationIcon = ({ collapsed }) => {
   const [isOpen, setIsOpen] = useState(false);
   const { locacoes } = useLocacoes();
+  const { maquinas } = useMaquinas();
   const [notificacoes, setNotificacoes] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const hoje = new Date();
@@ -35,19 +39,39 @@ const NotificationIcon = ({ collapsed }) => {
     });
 
     setNotificacoes(
-      locacoesDoDia.map((locacao) => ({
-        id: locacao.id,
-        mensagem: `Hoje é o dia da devolução da máquina ${
-          locacao.maquinaNome || "N/A"
-        }`,
-        data: locacao.dataFim,
-        cliente: locacao.clienteNome || "N/A",
-      }))
+      locacoesDoDia.map((locacao) => {
+        // Buscar nome correto da(s) máquina(s)
+        let nomeMaquina = "N/A";
+        if (Array.isArray(locacao.maquinas) && locacao.maquinas.length > 0) {
+          nomeMaquina = locacao.maquinas
+            .map((m) => {
+              const maq = maquinas.find((mq) => mq.id === m.maquinaId);
+              return maq ? maq.nome : m.maquinaNome || "N/A";
+            })
+            .join(", ");
+        } else if (locacao.maquinaId) {
+          const maq = maquinas.find((mq) => mq.id === locacao.maquinaId);
+          nomeMaquina = maq ? maq.nome : locacao.maquinaNome || "N/A";
+        } else if (locacao.maquinaNome) {
+          nomeMaquina = locacao.maquinaNome;
+        }
+        return {
+          id: locacao.id,
+          mensagem: `Hoje é o dia da devolução da máquina ${nomeMaquina}`,
+          data: locacao.dataFim,
+          cliente: locacao.clienteNome || "N/A",
+        };
+      })
     );
-  }, [locacoes]);
+  }, [locacoes, maquinas]);
 
   const handleClick = () => {
     setIsOpen(!isOpen);
+  };
+
+  const handleNotificacaoClick = (locacaoId) => {
+    setIsOpen(false);
+    navigate("/locacoes", { state: { scrollToLocacao: locacaoId } });
   };
 
   return (
@@ -101,7 +125,8 @@ const NotificationIcon = ({ collapsed }) => {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.2 }}
-                    className="p-4 border-b border-gray-100 hover:bg-gray-50"
+                    className="p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
+                    onClick={() => handleNotificacaoClick(notificacao.id)}
                   >
                     <p className="text-sm text-gray-800">
                       {notificacao.mensagem}

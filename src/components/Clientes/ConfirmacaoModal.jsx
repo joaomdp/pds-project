@@ -3,7 +3,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../../hooks/useAuth";
 import { reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 
-export default function ConfirmacaoModal({ isOpen, onClose, onConfirm, tipo }) {
+export default function ConfirmacaoModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  titulo = "Confirmação Necessária",
+  mensagem = "Por favor insira sua senha atual para confirmar.",
+}) {
   const { usuario } = useAuth();
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
@@ -59,9 +65,7 @@ export default function ConfirmacaoModal({ isOpen, onClose, onConfirm, tipo }) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-800">
-                Confirmação Necessária
-              </h2>
+              <h2 className="text-2xl font-bold text-gray-800">{titulo}</h2>
               <button
                 onClick={onClose}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -70,10 +74,7 @@ export default function ConfirmacaoModal({ isOpen, onClose, onConfirm, tipo }) {
               </button>
             </div>
 
-            <p className="text-gray-600 mb-6">
-              Para {tipo === "editar" ? "editar" : "excluir"} este cliente, por
-              favor insira sua senha atual para confirmar.
-            </p>
+            <p className="text-gray-600 mb-6">{mensagem}</p>
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="relative group">

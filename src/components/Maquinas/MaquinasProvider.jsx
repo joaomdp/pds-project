@@ -1,10 +1,5 @@
-import { useState, useEffect } from "react";
-import {
-  createMaquina,
-  getMaquinas,
-  updateMaquina,
-  deleteMaquina,
-} from "../../services/firebaseService";
+import { useState } from "react";
+import { useMaquinas } from "../../hooks/useMaquinas";
 import ListaMaquinas from "./ListaMaquinas";
 import AddMaquinaModal from "./AddMaquinaModal";
 import EditMaquinaModal from "./EditMaquinaModal";
@@ -12,57 +7,35 @@ import FiltroCategorias from "./FiltroCategorias";
 import { registrarAtividade } from "../../utils/atividades";
 
 export default function MaquinasProvider() {
-  const [maquinas, setMaquinas] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const {
+    maquinas,
+    loading: isLoading,
+    error,
+    adicionarMaquina,
+    editarMaquina,
+    excluirMaquina,
+  } = useMaquinas();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [maquinaEditando, setMaquinaEditando] = useState(null);
   const [categoriaFiltro, setCategoriaFiltro] = useState("Todas");
 
-  useEffect(() => {
-    const carregarMaquinas = async () => {
-      try {
-        setIsLoading(true);
-        const maquinasData = await getMaquinas();
-        setMaquinas(maquinasData);
-        setError(null);
-      } catch (err) {
-        setError("Erro ao carregar máquinas");
-        console.error(err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    carregarMaquinas();
-  }, []);
-
   const handleAddMaquina = async (maquinaData) => {
     try {
-      const novaMaquina = await createMaquina(maquinaData);
-      setMaquinas((prev) => [...prev, novaMaquina]);
-      setError(null);
+      await adicionarMaquina(maquinaData);
       setIsAddModalOpen(false);
 
       await registrarAtividade("maquina_criada", {
         maquinaNome: maquinaData.nome,
       });
     } catch (err) {
-      setError("Erro ao adicionar máquina");
-      console.error(err);
+      console.error("Erro ao adicionar máquina:", err);
     }
   };
 
   const handleEditarMaquina = async (id, maquinaData) => {
     try {
-      await updateMaquina(id, maquinaData);
-      setMaquinas((prev) =>
-        prev.map((maquina) =>
-          maquina.id === id ? { ...maquina, ...maquinaData } : maquina
-        )
-      );
-      setError(null);
+      await editarMaquina(id, maquinaData);
       setIsEditModalOpen(false);
       setMaquinaEditando(null);
 
@@ -70,24 +43,20 @@ export default function MaquinasProvider() {
         maquinaNome: maquinaData.nome,
       });
     } catch (err) {
-      setError("Erro ao editar máquina");
-      console.error(err);
+      console.error("Erro ao editar máquina:", err);
     }
   };
 
   const handleExcluirMaquina = async (id) => {
     try {
       const maquina = maquinas.find((m) => m.id === id);
-      await deleteMaquina(id);
-      setMaquinas((prev) => prev.filter((maquina) => maquina.id !== id));
-      setError(null);
+      await excluirMaquina(id);
 
       await registrarAtividade("maquina_excluida", {
         maquinaNome: maquina.nome,
       });
     } catch (err) {
-      setError("Erro ao excluir máquina");
-      console.error(err);
+      console.error("Erro ao excluir máquina:", err);
     }
   };
 

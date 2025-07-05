@@ -184,37 +184,33 @@ export default function EditMaquinaModal({
           onClick={onClose}
         >
           <motion.div
-            className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4"
-            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md mx-4 border border-gray-100"
+            initial={{ scale: 0.95, opacity: 0, y: 24 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+            exit={{ scale: 0.95, opacity: 0, y: 24 }}
             transition={{ type: "spring", duration: 0.5 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-800">
+            <div className="flex flex-col items-center mb-8">
+              <div className="bg-green-100 p-3 rounded-full mb-3">
+                <i className="bx bx-cube text-3xl text-green-600"></i>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800 text-center">
                 Editar Máquina
               </h2>
-              <button
-                onClick={onClose}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <i className="bx bx-x text-2xl"></i>
-              </button>
             </div>
-
             {error && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
+              <div className="p-4 bg-red-50 border border-red-200 rounded-xl mb-4">
                 <div className="flex items-center gap-2 text-red-600">
                   <i className="bx bx-error-circle text-xl"></i>
                   <p>{error}</p>
                 </div>
               </div>
             )}
-
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <i className="bx bx-rename text-lg text-gray-400"></i>
                   Nome da Máquina
                 </label>
                 <input
@@ -222,7 +218,10 @@ export default function EditMaquinaModal({
                   value={formData.nome}
                   onChange={handleChange}
                   name="nome"
-                  className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                  placeholder="Ex: Betoneira 400L"
+                  className={`w-full px-4 py-3 rounded-xl border-2 ${
+                    validationErrors.nome ? "border-red-300" : "border-gray-200"
+                  } focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all`}
                   required
                 />
                 {validationErrors.nome && (
@@ -231,19 +230,18 @@ export default function EditMaquinaModal({
                   </p>
                 )}
               </div>
-
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium text-gray-700">
+                  <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <i className="bx bx-category text-lg text-gray-400"></i>
                     Categoria
                   </label>
                   <button
                     type="button"
                     onClick={() => setShowAddCategoria(true)}
-                    className="text-sm text-green-600 hover:text-green-700 font-medium"
+                    className="text-sm text-green-600 hover:text-green-700 font-medium flex items-center gap-1"
                   >
-                    <i className="bx bx-plus mr-1"></i>
-                    Nova Categoria
+                    <i className="bx bx-plus"></i> Nova Categoria
                   </button>
                 </div>
                 <select
@@ -251,13 +249,24 @@ export default function EditMaquinaModal({
                   onChange={(e) =>
                     setFormData({ ...formData, categoria: e.target.value })
                   }
-                  className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                  className={`w-full px-4 py-3 rounded-xl border-2 ${
+                    validationErrors.categoria
+                      ? "border-red-300"
+                      : "border-gray-200"
+                  } focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all`}
                 >
-                  {categorias.map((categoria) => (
-                    <option key={categoria.id} value={categoria.nome}>
-                      {categoria.nome}
-                    </option>
-                  ))}
+                  {categorias
+                    .filter(
+                      (categoria) =>
+                        typeof categoria.id === "string" &&
+                        categoria.id.trim() !== ""
+                    )
+                    .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"))
+                    .map((categoria) => (
+                      <option key={categoria.id} value={categoria.nome}>
+                        {categoria.nome}
+                      </option>
+                    ))}
                 </select>
                 {validationErrors.categoria && (
                   <p className="mt-1 text-sm text-red-600">
@@ -265,10 +274,10 @@ export default function EditMaquinaModal({
                   </p>
                 )}
               </div>
-
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">
+                <div className="space-y-3">
+                  <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <i className="bx bx-money text-lg text-gray-400"></i>
                     Valor Diária (R$)
                   </label>
                   <input
@@ -276,7 +285,12 @@ export default function EditMaquinaModal({
                     value={formData.valorDiaria}
                     onChange={handleChange}
                     name="valorDiaria"
-                    className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                    placeholder="Ex: 120,00"
+                    className={`w-full px-4 py-3 rounded-xl border-2 ${
+                      validationErrors.valorDiaria
+                        ? "border-red-300"
+                        : "border-gray-200"
+                    } focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all`}
                     required
                   />
                   {validationErrors.valorDiaria && (
@@ -285,9 +299,9 @@ export default function EditMaquinaModal({
                     </p>
                   )}
                 </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">
+                <div className="space-y-3">
+                  <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <i className="bx bx-layer-plus text-lg text-gray-400"></i>
                     Quantidade
                   </label>
                   <input
@@ -296,7 +310,12 @@ export default function EditMaquinaModal({
                     onChange={handleChange}
                     name="quantidade"
                     min={maquina.quantidadeLocada || 1}
-                    className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                    placeholder="Ex: 1"
+                    className={`w-full px-4 py-3 rounded-xl border-2 ${
+                      validationErrors.quantidade
+                        ? "border-red-300"
+                        : "border-gray-200"
+                    } focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all`}
                     required
                   />
                   {validationErrors.quantidade && (
@@ -306,9 +325,9 @@ export default function EditMaquinaModal({
                   )}
                 </div>
               </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <i className="bx bx-image text-lg text-gray-400"></i>
                   URL da Imagem
                 </label>
                 <input
@@ -318,7 +337,11 @@ export default function EditMaquinaModal({
                     setFormData({ ...formData, imagemUrl: e.target.value })
                   }
                   placeholder="https://exemplo.com/imagem.jpg"
-                  className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                  className={`w-full px-4 py-3 rounded-xl border-2 ${
+                    validationErrors.imagemUrl
+                      ? "border-red-300"
+                      : "border-gray-200"
+                  } focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all`}
                 />
                 {validationErrors.imagemUrl && (
                   <p className="mt-1 text-sm text-red-600">
@@ -326,11 +349,11 @@ export default function EditMaquinaModal({
                   </p>
                 )}
                 {formData.imagemUrl && (
-                  <div className="mt-2">
+                  <div className="mt-3 flex justify-center">
                     <img
                       src={formData.imagemUrl}
                       alt="Preview"
-                      className="w-full h-32 object-cover rounded-lg"
+                      className="w-48 h-32 object-cover rounded-2xl shadow-lg border border-gray-200"
                       onError={(e) => {
                         e.target.src =
                           "https://via.placeholder.com/300x200?text=Imagem+Inválida";
@@ -339,23 +362,22 @@ export default function EditMaquinaModal({
                   </div>
                 )}
               </div>
-
-              <div className="flex justify-end space-x-3 pt-4">
+              <div className="flex justify-end space-x-3 pt-6">
                 <motion.button
                   type="button"
                   onClick={onClose}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="px-6 py-3 bg-gray-100 hover:bg-gray-200 rounded-xl text-gray-600 font-medium transition-colors"
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="px-6 py-3 bg-gray-100 hover:bg-gray-200 rounded-xl text-gray-600 font-medium transition-colors shadow"
                 >
                   Cancelar
                 </motion.button>
                 <motion.button
                   type="submit"
                   disabled={isLoading}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-medium flex items-center gap-2 transition-colors shadow-lg shadow-green-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold flex items-center gap-2 transition-all duration-300 shadow-lg shadow-green-500/20 disabled:opacity-50 disabled:cursor-not-allowed text-base"
                 >
                   {isLoading ? (
                     <>
@@ -388,7 +410,8 @@ export default function EditMaquinaModal({
           setDadosParaSalvar(null);
         }}
         onConfirm={handleConfirmacao}
-        tipo="editar"
+        titulo="Editar Máquina"
+        mensagem="Para editar esta máquina, por favor insira sua senha de administrador."
       />
     </AnimatePresence>
   );

@@ -104,10 +104,13 @@ export const adicionarCliente = async (clienteData) => {
 export const getClientes = async () => {
   try {
     const querySnapshot = await getDocs(collection(db, "clientes"));
-    const clientes = querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const clientes = querySnapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        ...data,
+        id: doc.id,
+      };
+    });
     return clientes;
   } catch (error) {
     console.error("Erro ao buscar clientes:", error);

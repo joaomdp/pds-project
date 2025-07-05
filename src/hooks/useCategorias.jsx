@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import {
   collection,
-  getDocs,
   addDoc,
   doc,
   deleteDoc,
+  onSnapshot,
 } from "firebase/firestore";
 import { db } from "../firebaseConfig";
 
@@ -13,25 +13,30 @@ export function useCategorias() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const carregarCategorias = async () => {
-    try {
-      const querySnapshot = await getDocs(collection(db, "categorias"));
-      const categoriasData = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setCategorias(categoriasData);
-    } catch (err) {
-      console.error("Erro ao carregar categorias:", err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Listener em tempo real
   useEffect(() => {
-    carregarCategorias();
+    const unsubscribe = onSnapshot(
+      collection(db, "categorias"),
+      (snapshot) => {
+        const categoriasData = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setCategorias(categoriasData);
+        setLoading(false);
+      },
+      (err) => {
+        setError(err.message);
+        setLoading(false);
+      }
+    );
+    return () => unsubscribe();
   }, []);
+
+  const carregarCategorias = async () => {
+    // Mantém para compatibilidade, mas não faz nada pois o listener já atualiza
+    return;
+  };
 
   const adicionarCategoria = async (novaCategoria) => {
     try {
@@ -40,9 +45,8 @@ export function useCategorias() {
           nome: novaCategoria,
           createdAt: new Date(),
         });
-        const categoria = { id: docRef.id, nome: novaCategoria };
-        setCategorias((prev) => [...prev, categoria]);
-        return categoria;
+        // Não precisa atualizar manualmente, o listener faz isso
+        return { id: docRef.id, nome: novaCategoria };
       }
     } catch (error) {
       console.error("Erro ao adicionar categoria:", error);
@@ -54,7 +58,7 @@ export function useCategorias() {
     try {
       const categoriaRef = doc(db, "categorias", id);
       await deleteDoc(categoriaRef);
-      setCategorias((prev) => prev.filter((cat) => cat.id !== id));
+      // Não precisa atualizar manualmente, o listener faz isso
     } catch (error) {
       console.error("Erro ao remover categoria:", error);
       throw error;

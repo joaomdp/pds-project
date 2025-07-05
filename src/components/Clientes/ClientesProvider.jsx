@@ -22,6 +22,8 @@ export default function ClientesProvider({ termoBusca }) {
   const [clienteParaExcluir, setClienteParaExcluir] = useState(null);
   const [erroAdicao, setErroAdicao] = useState(null);
   const [acaoPendente, setAcaoPendente] = useState(null);
+  const [dadosVisiveis, setDadosVisiveis] = useState(false);
+  const toggleDadosVisiveis = () => setDadosVisiveis((v) => !v);
 
   const clientesFiltrados = clientes.filter((cliente) =>
     cliente.nome.toLowerCase().includes(termoBusca.toLowerCase())
@@ -110,21 +112,40 @@ export default function ClientesProvider({ termoBusca }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-800">Clientes</h2>
-        <button
-          onClick={() => setIsAddModalOpen(true)}
-          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
-        >
-          <i className="bx bx-plus text-xl"></i>
-          Novo Cliente
-        </button>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-3">
+        <h2 className="text-2xl font-bold text-gray-800 mb-2 md:mb-0">
+          Clientes
+        </h2>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 shadow-lg shadow-green-500/20"
+          >
+            <i className="bx bx-plus text-xl"></i>
+            Novo Cliente
+          </button>
+          <button
+            onClick={toggleDadosVisiveis}
+            className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 border ${
+              dadosVisiveis
+                ? "bg-red-500 hover:bg-red-600 text-white border-red-500"
+                : "bg-white text-green-700 border-green-500 hover:bg-green-50"
+            }`}
+          >
+            <i
+              className={`bx ${dadosVisiveis ? "bx-hide" : "bx-show"} text-xl`}
+            ></i>
+            {dadosVisiveis ? "Ocultar Todos" : "Mostrar Todos"}
+          </button>
+        </div>
       </div>
 
       <ListaClientes
         clientes={clientesFiltrados}
         onEditar={handleEditarCliente}
         onExcluir={handleExcluirCliente}
+        dadosVisiveis={dadosVisiveis}
+        toggleDadosVisiveis={toggleDadosVisiveis}
       />
 
       <AddClienteModal
@@ -157,7 +178,6 @@ export default function ClientesProvider({ termoBusca }) {
           setAcaoPendente(null);
         }}
         onConfirm={handleConfirmacao}
-        tipo={clienteParaExcluir ? "excluir" : "editar"}
         titulo={clienteParaExcluir ? "Excluir Cliente" : "Editar Cliente"}
         mensagem={
           clienteParaExcluir

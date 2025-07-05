@@ -29,22 +29,10 @@ export default function MaquinaCard({
 
   const handleLocar = async (dados) => {
     try {
-      const novaQuantidadeLocada =
-        (maquina.quantidadeLocada || 0) + dados.quantidade;
-      const maquinaAtualizada = {
-        ...maquina,
-        quantidadeLocada: novaQuantidadeLocada,
-        disponivel: novaQuantidadeLocada < maquina.quantidade,
-      };
-
-      setMaquina(maquinaAtualizada);
-
-      await editarMaquina(maquina.id, maquinaAtualizada);
-
-      console.log("Dados da locação:", dados);
+      console.log("handleLocar chamado com dados:", dados);
       setShowLocarModal(false);
     } catch (error) {
-      console.error("Erro ao atualizar máquina:", error);
+      console.error("Erro ao processar locação:", error);
     }
   };
 
@@ -175,19 +163,25 @@ export default function MaquinaCard({
               Editar
             </motion.button>
             <motion.button
-              whileHover={{ scale: 1.02, backgroundColor: "#059669" }}
+              whileHover={{
+                scale: 1.02,
+                backgroundColor: maquinaDisponivel ? "#059669" : "#3b82f6",
+              }}
               whileTap={{ scale: 0.98 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
               onClick={() => setShowLocarModal(true)}
-              disabled={!maquinaDisponivel}
               className={`flex-1 px-4 py-2 ${
                 maquinaDisponivel
                   ? "bg-emerald-500 hover:bg-emerald-600 text-white"
-                  : "bg-zinc-300 text-zinc-500 cursor-not-allowed"
+                  : "bg-blue-500 hover:bg-blue-600 text-white"
               } rounded-lg transition-all duration-300 shadow-sm hover:shadow-md btn text-responsive`}
             >
-              <i className="bx bx-cart-add mr-2"></i>
-              {maquinaDisponivel ? "Locar" : "Indisponível"}
+              <i
+                className={`${
+                  maquinaDisponivel ? "bx bx-cart-add" : "bx bx-calendar-check"
+                } mr-2`}
+              ></i>
+              {maquinaDisponivel ? "Locar" : "Reservar"}
             </motion.button>
           </motion.div>
         </div>
