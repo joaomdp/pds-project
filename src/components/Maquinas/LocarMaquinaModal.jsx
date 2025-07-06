@@ -304,16 +304,25 @@ export default function LocarMaquinaModal({
     if (maquinasSelecionadas.length === 0) {
       errors.maquinas = "Pelo menos uma máquina deve ser selecionada";
     } else {
-      // Verificar máquinas duplicadas
-      const idsMaquinas = maquinasSelecionadas.map((item) => item.maquina.id);
-      const idsUnicos = [...new Set(idsMaquinas)];
-      if (idsMaquinas.length !== idsUnicos.length) {
-        errors.maquinas =
-          "Não é possível selecionar a mesma máquina mais de uma vez";
+      // Verificar máquinas duplicadas apenas se não for modo edição ou renovação
+      if (!modoEdicao && !modoRenovacao) {
+        const idsMaquinas = maquinasSelecionadas
+          .filter((item) => item.maquina && item.maquina.id)
+          .map((item) => item.maquina.id);
+        const idsUnicos = [...new Set(idsMaquinas)];
+        if (idsMaquinas.length !== idsUnicos.length) {
+          errors.maquinas =
+            "Não é possível selecionar a mesma máquina mais de uma vez";
+        }
       }
 
       // Verificar quantidades válidas
       maquinasSelecionadas.forEach((item, index) => {
+        if (!item.maquina || !item.maquina.id) {
+          errors[`maquina_${index}`] = "Máquina inválida";
+          return;
+        }
+
         const quantidadeSolicitada = parseInt(item.quantidade) || 0;
         let quantidadeDisponivel =
           item.maquina.quantidade - (item.maquina.quantidadeLocada || 0);
@@ -614,24 +623,48 @@ export default function LocarMaquinaModal({
 
   const adicionarMaquina = () => {
     try {
+      console.log("Adicionar máquina - Debug:", {
+        maquinas: maquinas.length,
+        maquinasSelecionadas: maquinasSelecionadas.length,
+        modoEdicao,
+        modoRenovacao,
+        tipoLocacao,
+      });
+
       if (maquinas.length === 0) {
         throw new Error("Nenhuma máquina disponível no sistema.");
       }
 
       // Verificar máquinas já selecionadas
-      const idsSelecionados = maquinasSelecionadas.map(
-        (item) => item.maquina.id
-      );
+      const idsSelecionados = maquinasSelecionadas
+        .filter((item) => item.maquina && item.maquina.id)
+        .map((item) => item.maquina.id);
+
+      console.log("IDs já selecionados:", idsSelecionados);
 
       // Encontrar máquinas disponíveis que não estão selecionadas
       const maquinasDisponiveis = maquinas.filter((m) => {
         // Verificar se a máquina não está já selecionada
-        if (idsSelecionados.includes(m.id)) return false;
+        if (idsSelecionados.includes(m.id)) {
+          console.log(`Máquina ${m.nome} já selecionada`);
+          return false;
+        }
 
-        // Verificar se há unidades disponíveis
-        const quantidadeDisponivel = m.quantidade - (m.quantidadeLocada || 0);
-        return quantidadeDisponivel > 0;
+        // Verificar se há unidades disponíveis (para locação imediata)
+        if (tipoLocacao === "imediata") {
+          const quantidadeDisponivel = m.quantidade - (m.quantidadeLocada || 0);
+          console.log(
+            `Máquina ${m.nome} - Disponível: ${quantidadeDisponivel}`
+          );
+          return quantidadeDisponivel > 0;
+        }
+
+        // Para reservas, permitir adicionar qualquer máquina
+        console.log(`Máquina ${m.nome} disponível para reserva`);
+        return true;
       });
+
+      console.log("Máquinas disponíveis:", maquinasDisponiveis.length);
 
       if (maquinasDisponiveis.length === 0) {
         throw new Error(
@@ -646,14 +679,20 @@ export default function LocarMaquinaModal({
         throw new Error("Máquina selecionada é inválida. Tente novamente.");
       }
 
-      setMaquinasSelecionadas((prev) => [
-        ...prev,
-        {
-          maquina: maquinaDisponivel,
-          quantidade: "1",
-          valorDiaria: maquinaDisponivel.valorDiaria || 0,
-        },
-      ]);
+      console.log("Adicionando máquina:", maquinaDisponivel.nome);
+
+      setMaquinasSelecionadas((prev) => {
+        const novaLista = [
+          ...prev,
+          {
+            maquina: maquinaDisponivel,
+            quantidade: "1",
+            valorDiaria: maquinaDisponivel.valorDiaria || 0,
+          },
+        ];
+        console.log("Nova lista de máquinas:", novaLista.length);
+        return novaLista;
+      });
 
       // Limpar erro se existir
       setError(null);
@@ -691,9 +730,21 @@ export default function LocarMaquinaModal({
       }
 
       setMaquinasSelecionadas((prev) =>
-        prev.map((item, i) =>
-          i === index ? { ...item, [campo]: valor } : item
-        )
+        prev.map((item, i) => {
+          if (i === index) {
+            if (campo === "maquina") {
+              // Tratamento especial para atualizar a máquina
+              return {
+                ...item,
+                maquina: valor,
+                valorDiaria: valor.valorDiaria || item.valorDiaria,
+              };
+            } else {
+              return { ...item, [campo]: valor };
+            }
+          }
+          return item;
+        })
       );
     } catch (error) {
       console.error("Erro ao atualizar máquina selecionada:", error);
@@ -731,23 +782,28 @@ export default function LocarMaquinaModal({
 
   const limparFormulario = useCallback(() => {
     try {
+      console.log("Limpar formulário chamado");
       // Limpar timeouts existentes
       if (errorTimeout) {
         clearTimeout(errorTimeout);
         setErrorTimeout(null);
       }
 
-      setMaquinasSelecionadas(
-        maquinaInicial && maquinaInicial.valorDiaria !== undefined
-          ? [
-              {
-                maquina: maquinaInicial,
-                quantidade: "1",
-                valorDiaria: maquinaInicial.valorDiaria || 0,
-              },
-            ]
-          : []
-      );
+      // Só limpar máquinas se não estiver em modo edição ou renovação
+      if (!modoEdicao && !modoRenovacao) {
+        setMaquinasSelecionadas(
+          maquinaInicial && maquinaInicial.valorDiaria !== undefined
+            ? [
+                {
+                  maquina: maquinaInicial,
+                  quantidade: "1",
+                  valorDiaria: maquinaInicial.valorDiaria || 0,
+                },
+              ]
+            : []
+        );
+      }
+
       setDataInicio("");
       setDataFim("");
       setEndereco("");
@@ -764,7 +820,7 @@ export default function LocarMaquinaModal({
       console.error("Erro ao limpar formulário:", error);
       // Não mostrar erro para o usuário neste caso, apenas log
     }
-  }, [maquinaInicial, errorTimeout]);
+  }, [maquinaInicial, errorTimeout, modoEdicao, modoRenovacao]);
 
   const mostrarErroTemporizado = useCallback(
     (mensagem, duracao = 10000) => {
@@ -823,6 +879,7 @@ export default function LocarMaquinaModal({
 
   useEffect(() => {
     if (!isOpen) {
+      console.log("Modal fechado - limpando formulário");
       limparFormulario();
     }
   }, [isOpen, limparFormulario]);
@@ -1181,73 +1238,76 @@ export default function LocarMaquinaModal({
                                 <label className="text-sm text-gray-600">
                                   Selecione
                                 </label>
-                                {modoEdicao || modoRenovacao ? (
-                                  <select
-                                    value={item.maquina.id}
-                                    onChange={(e) => {
-                                      const novaMaquina = maquinas.find(
-                                        (m) => m.id === e.target.value
-                                      );
+                                <select
+                                  value={item.maquina.id}
+                                  onChange={(e) => {
+                                    const novaMaquina = maquinas.find(
+                                      (m) => m.id === e.target.value
+                                    );
+                                    if (novaMaquina) {
                                       atualizarMaquinaSelecionada(
                                         index,
                                         "maquina",
                                         novaMaquina
                                       );
-                                      atualizarMaquinaSelecionada(
-                                        index,
-                                        "valorDiaria",
-                                        novaMaquina.valorDiaria
-                                      );
-                                    }}
-                                    className="w-full px-2 py-1 rounded-lg border border-gray-200 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                                  >
-                                    {/* Agrupar por categoria e ordenar */}
-                                    {Object.entries(
-                                      maquinas
-                                        .filter(
-                                          (m) =>
-                                            typeof m.id === "string" &&
-                                            m.id.trim() !== ""
-                                        )
-                                        .reduce((acc, m) => {
-                                          const cat =
-                                            m.categoria || "Sem categoria";
-                                          if (!acc[cat]) acc[cat] = [];
-                                          acc[cat].push(m);
-                                          return acc;
-                                        }, {})
-                                    )
-                                      .sort(([catA], [catB]) =>
-                                        catA.localeCompare(catB)
+                                    }
+                                  }}
+                                  className="w-full px-2 py-1 rounded-lg border border-gray-200 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                                >
+                                  {/* Agrupar por categoria e ordenar */}
+                                  {Object.entries(
+                                    maquinas
+                                      .filter(
+                                        (m) =>
+                                          typeof m.id === "string" &&
+                                          m.id.trim() !== ""
                                       )
-                                      .map(([categoria, maquinasCat]) => (
-                                        <optgroup
-                                          key={categoria}
-                                          label={categoria}
-                                        >
-                                          {maquinasCat
-                                            .sort((a, b) =>
-                                              a.nome.localeCompare(b.nome)
-                                            )
-                                            .map((m, idx) => (
-                                              <option
-                                                key={m.id || `sem-id-${idx}`}
-                                                value={m.id}
-                                              >
-                                                {m.nome}
-                                              </option>
-                                            ))}
-                                        </optgroup>
-                                      ))}
-                                  </select>
-                                ) : (
-                                  <input
-                                    type="text"
-                                    value={item.maquina.nome}
-                                    className="w-full px-2 py-1 rounded-lg border border-gray-200 bg-gray-100 text-gray-700 outline-none"
-                                    disabled
-                                  />
-                                )}
+                                      .reduce((acc, m) => {
+                                        const cat =
+                                          m.categoria || "Sem categoria";
+                                        if (!acc[cat]) acc[cat] = [];
+                                        acc[cat].push(m);
+                                        return acc;
+                                      }, {})
+                                  )
+                                    .sort(([catA], [catB]) =>
+                                      catA.localeCompare(catB)
+                                    )
+                                    .map(([categoria, maquinasCat]) => (
+                                      <optgroup
+                                        key={categoria}
+                                        label={categoria}
+                                      >
+                                        {maquinasCat
+                                          .filter((m) => {
+                                            // Verificar se a máquina não está já selecionada em outras posições
+                                            const idsSelecionados =
+                                              maquinasSelecionadas
+                                                .filter(
+                                                  (item, i) =>
+                                                    i !== index &&
+                                                    item.maquina &&
+                                                    item.maquina.id
+                                                )
+                                                .map((item) => item.maquina.id);
+                                            return !idsSelecionados.includes(
+                                              m.id
+                                            );
+                                          })
+                                          .sort((a, b) =>
+                                            a.nome.localeCompare(b.nome)
+                                          )
+                                          .map((m, idx) => (
+                                            <option
+                                              key={m.id || `sem-id-${idx}`}
+                                              value={m.id}
+                                            >
+                                              {m.nome}
+                                            </option>
+                                          ))}
+                                      </optgroup>
+                                    ))}
+                                </select>
                               </div>
                               <div>
                                 <label className="text-sm text-gray-600">
@@ -1334,17 +1394,18 @@ export default function LocarMaquinaModal({
                           </div>
                         ))
                     )}
-                    {(modoEdicao || modoRenovacao) && (
-                      <div className="mt-2">
-                        <button
-                          type="button"
-                          onClick={adicionarMaquina}
-                          className="text-emerald-600 hover:text-emerald-800 font-medium flex items-center"
-                        >
-                          <i className="bx bx-plus mr-1"></i> Adicionar Máquina
-                        </button>
-                      </div>
-                    )}
+                    <div className="mt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          console.log("Botão Adicionar Máquina clicado");
+                          adicionarMaquina();
+                        }}
+                        className="text-emerald-600 hover:text-emerald-800 font-medium flex items-center"
+                      >
+                        <i className="bx bx-plus mr-1"></i> Adicionar Máquina
+                      </button>
+                    </div>
 
                     {/* Exibir erros de validação das máquinas */}
                     {validationErrors.maquinas && (
