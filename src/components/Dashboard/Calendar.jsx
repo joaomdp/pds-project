@@ -162,6 +162,7 @@ export default function Calendar() {
           ))}
           {days.map((day, index) => {
             const locacoesDoDia = getLocacoesDoDia(day);
+            const ehHoje = isToday(day);
             return (
               <motion.div
                 key={index}
@@ -169,14 +170,16 @@ export default function Calendar() {
                 className={`aspect-square p-1 ${
                   !isSameMonth(day, currentDate)
                     ? "text-gray-300"
-                    : isToday(day)
-                    ? "bg-green-50"
+                    : ehHoje
+                    ? ""
                     : ""
                 }`}
               >
                 <div
                   className={`h-full rounded-lg border p-2 transition-all duration-200 ${
-                    locacoesDoDia.length > 0
+                    ehHoje
+                      ? "border-green-400 bg-green-400" // Destaque forte para o dia atual
+                      : locacoesDoDia.length > 0
                       ? "border-green-200 bg-green-50"
                       : "border-gray-100 hover:border-green-200"
                   }`}
@@ -184,13 +187,17 @@ export default function Calendar() {
                   <div className="flex justify-between items-start">
                     <span
                       className={`text-base font-medium ${
-                        isToday(day) ? "text-green-600" : "text-gray-700"
+                        ehHoje
+                          ? "text-white" // Número do dia atual em branco
+                          : "text-gray-700"
                       }`}
                     >
                       {format(day, "d")}
                     </span>
                     {locacoesDoDia.length > 0 && (
-                      <span className="text-xs font-medium text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                      <span
+                        className={`text-xs font-medium text-green-600 bg-green-100 px-2 py-1 rounded-full`}
+                      >
                         {locacoesDoDia.length}
                       </span>
                     )}

@@ -42,18 +42,24 @@ export default function TopMachinesChart() {
         locacoesSnapshot.forEach((doc) => {
           const locacao = doc.data();
           if (Array.isArray(locacao.maquinas) && locacao.maquinas.length > 0) {
-            locacao.maquinas.forEach((m) => {
-              if (!m.maquinaId) return;
-              if (!maquinasCount[m.maquinaId]) {
-                maquinasCount[m.maquinaId] = {
-                  id: m.maquinaId,
-                  nome: m.maquinaNome || m.nome || "Máquina não encontrada",
+            // Pega apenas os IDs únicos das máquinas nesta locação
+            const maquinasUnicas = [
+              ...new Set(
+                locacao.maquinas
+                  .filter((m) => m.maquinaId)
+                  .map((m) => m.maquinaId)
+              ),
+            ];
+            maquinasUnicas.forEach((maquinaId) => {
+              const m = locacao.maquinas.find((x) => x.maquinaId === maquinaId);
+              if (!maquinasCount[maquinaId]) {
+                maquinasCount[maquinaId] = {
+                  id: maquinaId,
+                  nome: m?.maquinaNome || m?.nome || "Máquina não encontrada",
                   quantidade: 0,
                 };
               }
-              maquinasCount[m.maquinaId].quantidade += m.quantidade
-                ? Number(m.quantidade)
-                : 1;
+              maquinasCount[maquinaId].quantidade += 1; // Conta só 1 vez por locação
             });
           } else if (locacao.maquinaId) {
             if (!maquinasCount[locacao.maquinaId]) {

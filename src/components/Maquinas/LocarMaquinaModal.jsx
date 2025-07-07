@@ -326,7 +326,7 @@ export default function LocarMaquinaModal({
         const quantidadeSolicitada = parseInt(item.quantidade) || 0;
         let quantidadeDisponivel =
           item.maquina.quantidade - (item.maquina.quantidadeLocada || 0);
-        if (modoEdicao) {
+        if (modoEdicao || modoRenovacao) {
           quantidadeDisponivel += quantidadeSolicitada;
         }
         if (quantidadeSolicitada <= 0) {
@@ -400,8 +400,23 @@ export default function LocarMaquinaModal({
         }
 
         if (tipoLocacao === "imediata") {
-          const quantidadeDisponivel =
+          let quantidadeDisponivel =
             maquina.quantidade - (maquina.quantidadeLocada || 0);
+
+          // Se estiver editando ou renovando, some a quantidade da própria locação antiga
+          if (
+            (modoEdicao || modoRenovacao) &&
+            locacaoAtual &&
+            Array.isArray(locacaoAtual.maquinas)
+          ) {
+            const maquinaAntiga = locacaoAtual.maquinas.find(
+              (m) => m.maquinaId === maquinaLocacao.maquinaId
+            );
+            if (maquinaAntiga) {
+              quantidadeDisponivel += maquinaAntiga.quantidade;
+            }
+          }
+
           if (maquinaLocacao.quantidade > quantidadeDisponivel) {
             throw new Error(
               `Máquina "${maquina.nome}" não possui unidades suficientes. Disponível: ${quantidadeDisponivel}, Solicitado: ${maquinaLocacao.quantidade}`
