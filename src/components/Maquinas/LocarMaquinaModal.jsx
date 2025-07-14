@@ -96,13 +96,15 @@ export default function LocarMaquinaModal({
             .map((m) => ({
               maquina: maquinas.find((maq) => maq.id === m.maquinaId) || {},
               quantidade: m.quantidade?.toString() || "1",
-              valorDiaria: m.valorDiaria || 0,
+              valorDiaria: m.valorDiaria, // Sempre usa o valor da locação
             }))
             .filter(
               (item) =>
                 item.maquina && item.maquina.id && item.maquina.id.trim() !== ""
             )
         );
+        // Manter o valor total salvo na locação
+        setValorTotalEditado(locacaoAtual?.valorTotal || 0);
       } else if (maquinaInicial && maquinaInicial.valorDiaria !== undefined) {
         setMaquinasSelecionadas([
           {
@@ -166,7 +168,7 @@ export default function LocarMaquinaModal({
     try {
       if (!dataInicio || !dataFim || maquinasSelecionadas.length === 0) {
         setValorTotal(0);
-        setValorTotalEditado(0);
+        if (!modoEdicao) setValorTotalEditado(0);
         return;
       }
 
@@ -176,7 +178,7 @@ export default function LocarMaquinaModal({
 
       if (isNaN(inicio.getTime()) || isNaN(fim.getTime())) {
         setValorTotal(0);
-        setValorTotalEditado(0);
+        if (!modoEdicao) setValorTotalEditado(0);
         return;
       }
 
@@ -191,11 +193,11 @@ export default function LocarMaquinaModal({
         }, 0) + valorFrete;
 
       setValorTotal(novoValorTotal);
-      setValorTotalEditado(novoValorTotal);
+      if (!modoEdicao) setValorTotalEditado(novoValorTotal);
     } catch (error) {
       console.error("Erro ao calcular valor total:", error);
       setValorTotal(0);
-      setValorTotalEditado(0);
+      if (!modoEdicao) setValorTotalEditado(0);
     }
   }, [
     dataInicio,
@@ -457,7 +459,9 @@ export default function LocarMaquinaModal({
           : tipoLocacao === "reserva"
           ? "reservada"
           : "ativa",
-        tipoLocacao: modoEdicao ? locacaoAtual.tipoLocacao : tipoLocacao,
+        tipoLocacao: modoEdicao
+          ? locacaoAtual.tipoLocacao ?? "imediata"
+          : tipoLocacao,
         dataCriacao,
         pago: pago,
       };
